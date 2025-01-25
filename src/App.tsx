@@ -158,7 +158,7 @@ function App() {
 
                 {projectData && (
                     <div className="mt-16 bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
-                        <div className="h-[600px] w-full">
+                        <div className="h-[900px] w-full">
                             <ProjectGraph
                                 projectData={projectData}
                                 setProjectData={setProjectData}

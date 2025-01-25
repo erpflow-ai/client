@@ -28,11 +28,11 @@ export type ApiResponse = {
     }>;
 };
 
-const getParent = (ordertext: string, node_id: number) => {
+const getParent = (ordertext: string, node_id: string) => {
     return {
-        id: node_id.toString(),
+        id: node_id,
         type: "custom",
-        position: { x: 250, y: 100 },
+        position: { x: 0, y: 100 },
         data: {
             label: ordertext,
             details: {
@@ -47,37 +47,83 @@ const getParent = (ordertext: string, node_id: number) => {
 };
 
 const parser = (json: any, orderText: string) => {
-    let nodes = [];
-    let edges = [];
-    let node_id = 1;
+    let nodes: any[] = [];
+    let edges: any[] = [];
 
+    let node_id = "parent";
     const parent = getParent(orderText, node_id);
     nodes.push(parent);
 
-    for (let i = 0; i < json.work_orders.length; i++) {
-        node_id++;
-        let node = {
-            id: node_id.toString(),
+    const work_orders_map: { [key: string]: any } = {};
+    for (const wo of json.work_orders) {
+        work_orders_map[wo.id] = wo;
+    }
+
+    const all_work_order_ids = new Set();
+    const child_work_order_ids = new Set();
+
+    for (const wo of json.work_orders) {
+        all_work_order_ids.add(wo.id);
+        for (const child_id of wo.child_work_orders) {
+            child_work_order_ids.add(child_id);
+        }
+    }
+
+    const root_work_order_ids = [...all_work_order_ids].filter(
+        (id) => !child_work_order_ids.has(id)
+    );
+
+    let level = 2;
+
+    const processWorkOrder = (
+        work_order_id: any,
+        from_node_id: any,
+        sequence: number,
+        level: number
+    ) => {
+        const work_order = work_orders_map[work_order_id];
+        if (!work_order) return;
+        const node = {
+            id: work_order.id.toString(),
             type: "custom",
-            position: { x: 250 - (json.work_orders.length - i) * 150, y: 500 },
+            position: { x: sequence * 500, y: level * 150 },
             data: {
-                label: json.work_orders[i].task,
+                label: work_order.task,
                 details: {
-                    id: node_id.toString(),
-                    duration: `${json.work_orders[i].duration_days} days`,
-                    cost: `$${json.work_orders[i].estimated_cost}`,
-                    resources: "Project Manager, Architects",
+                    id: work_order.id.toString(),
+                    duration: `${sequence} days`,
+                    cost: `$${level}`,
+                    resources: Object.keys(work_order.stakeholders).join(", "),
                     status: "In Progress",
                 },
             },
         };
         nodes.push(node);
         edges.push({
-            id: `e${parent.id}-${node.id}`,
-            source: parent.id,
+            id: `e${from_node_id}-${node.id}`,
+            source: from_node_id,
             target: node.id,
         });
+        let sequence_num = 0;
+        const len = work_order.child_work_orders.length;
+        for (const child_id of work_order.child_work_orders) {
+            processWorkOrder(
+                child_id,
+                node.id,
+                sequence_num - (len - 1) / 2,
+                level + 1
+            );
+            sequence_num++;
+        }
+    };
+
+    let sequence = 0;
+    const len = root_work_order_ids.length;
+    for (const root_id of root_work_order_ids) {
+        processWorkOrder(root_id, parent.id, sequence - (len - 1) / 2, level);
+        sequence++;
     }
+
     return { nodes, edges };
 };
 
@@ -91,6 +137,7 @@ export const apiCall = async (orderText: string) => {
             console.log(message);
             message = message.substring(7, message.length - 4);
             let json = JSON.parse(message);
+            // console.log(">>>>>>", json);
             let parsedData = parser(json, orderText);
             return parsedData;
         })
