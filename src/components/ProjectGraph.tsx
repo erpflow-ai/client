@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReactFlow, {
     Node,
     Edge,
@@ -13,21 +13,28 @@ import ReactFlow, {
     ReactFlowProvider,
 } from "reactflow";
 import "reactflow/dist/style.css";
-import NodeDetails from "./NodeDetails";
+import { ApiResponse } from "../utils/api";
 
 type NodeData = {
     label: string;
     details: {
+        id: string;
         duration: string;
         cost: string;
         resources: string;
         status: string;
     };
+    setShowDetails: React.Dispatch<React.SetStateAction<boolean>>;
+    setSelectedNode: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const CustomNode: React.FC<NodeProps<NodeData>> = ({ data }) => {
-    const [showDetails, setShowDetails] = useState(false);
+    const { setSelectedNode, setShowDetails } = data;
 
+    const handleClick = () => {
+        setShowDetails(true);
+        setSelectedNode(data.details.id);
+    };
     return (
         <div className="relative">
             <Handle type="target" position={Position.Top} className="w-2 h-2" />
@@ -43,36 +50,38 @@ const CustomNode: React.FC<NodeProps<NodeData>> = ({ data }) => {
             />
             <div
                 className="absolute bottom-[-5px] right-[-5px] bg-gray-900 border border-gray-600 rounded-full p-1 cursor-pointer hover:bg-gray-700 transition-colors duration-200"
-                onClick={() => setShowDetails(true)}
+                onClick={handleClick}
             >
                 <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    className="h-1 w-1 text-white"
+                    className="h-2 w-2 text-white"
                     viewBox="0 0 20 20"
                     fill="currentColor"
                 >
                     <path d="M17.414 2.586a2 2 0 00-2.828 0l-10 10A2 2 0 004 14v2a2 2 0 002 2h2a2 2 0 001.414-.586l10-10a2 2 0 000-2.828l-2-2zM6 16H5v-1l8-8 1 1-8 8z" />
                 </svg>
             </div>
-
-            {showDetails && NodeDetails({ data, setShowDetails })}
         </div>
     );
 };
 
 type ProjectGraphProps = {
-    initialNodes: Node[];
-    initialEdges: Edge[];
+    projectData: ApiResponse;
+    setProjectData: React.Dispatch<React.SetStateAction<any>>;
+    setShowDetails: React.Dispatch<React.SetStateAction<boolean>>;
+    setSelectedNode: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const panOnDrag = [1, 2];
 
 const ProjectGraph: React.FC<ProjectGraphProps> = ({
-    initialNodes,
-    initialEdges,
+    projectData,
+    setProjectData,
+    setShowDetails,
+    setSelectedNode,
 }) => {
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState(projectData.nodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(projectData.edges);
 
     const nodeTypes = useMemo(
         () => ({
@@ -92,17 +101,52 @@ const ProjectGraph: React.FC<ProjectGraphProps> = ({
             type: "custom",
             position: { x: 10, y: 10 },
             data: {
-                label: "Project Initiation",
+                label: "New Node",
                 details: {
-                    duration: "2 weeks",
-                    cost: "$50,000",
-                    resources: "Project Manager, Architects",
-                    status: "In Progress",
+                    id: `${Date.now()}`,
+                    duration: "",
+                    cost: "",
+                    resources: "",
+                    status: "",
                 },
+                setShowDetails,
+                setSelectedNode,
             },
         };
         setNodes((nodes) => [...nodes, new_node]);
     };
+    const [loading, setLoading] = useState(false);
+    useEffect(() => {
+        if (loading) {
+            setLoading(false);
+            return;
+        }
+        setProjectData({ nodes, edges });
+        setLoading(true);
+    }, [nodes, edges]);
+    useEffect(() => {
+        if (loading) {
+            setLoading(false);
+            return;
+        }
+        setNodes(projectData.nodes);
+        setEdges(projectData.edges);
+        setLoading(true);
+    }, [projectData]);
+
+    useEffect(() => {
+        nodes.forEach((node) => {
+            node.data.setShowDetails = setShowDetails;
+            node.data.setSelectedNode = setSelectedNode;
+        });
+    }, []);
+
+    useEffect(() => {
+        nodes.forEach((node) => {
+            node.data.setShowDetails = setShowDetails;
+            node.data.setSelectedNode = setSelectedNode;
+        });
+    }, []);
 
     const onNodesDelete = useCallback(
         (deletedNodes: Node[]) => {

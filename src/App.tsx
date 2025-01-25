@@ -1,8 +1,9 @@
-import React, { useState } from "react";
-import { Bot, Send, Building2, Sparkles, Loader2, X } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Bot, Send, Building2, Sparkles, X } from "lucide-react";
 import ProjectGraph from "./components/ProjectGraph";
 import LoadingScreen from "./components/LoadingScreen";
-import { ApiResponse, mockApiCall } from "./utils/api";
+import { ApiResponse, apiCall } from "./utils/api";
+import NodeDetails from "./components/NodeDetails";
 
 const exampleOrders = [
     "200ft bridge in Mumbai",
@@ -37,6 +38,8 @@ function App() {
     const [isLoading, setIsLoading] = useState(false);
     const [showSuccessMessage, setShowSuccessMessage] = useState(false);
     const [projectData, setProjectData] = useState<ApiResponse | null>(null);
+    const [showNodeDetails, setShowNodeDetails] = useState(false);
+    const [selectedNode, setSelectedNode] = useState<string | null>(null);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -45,8 +48,9 @@ function App() {
         setProjectData(null);
 
         try {
-            const response = await mockApiCall(order);
+            const response: any = await apiCall(order);
             setProjectData(response);
+            console.log(response);
             setShowSuccessMessage(true);
             setTimeout(() => setShowSuccessMessage(false), 3000);
         } finally {
@@ -54,6 +58,12 @@ function App() {
             setOrder("");
         }
     };
+
+    useEffect(() => {
+        if (projectData) {
+            console.log("projectData changed");
+        }
+    }, [projectData]);
 
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-gray-900 via-slate-900 to-black text-white overflow-hidden relative">
@@ -150,8 +160,10 @@ function App() {
                     <div className="mt-16 bg-gray-900/50 backdrop-blur-sm rounded-2xl border border-gray-700/50 overflow-hidden">
                         <div className="h-[600px] w-full">
                             <ProjectGraph
-                                initialNodes={projectData.nodes}
-                                initialEdges={projectData.edges}
+                                projectData={projectData}
+                                setProjectData={setProjectData}
+                                setShowDetails={setShowNodeDetails}
+                                setSelectedNode={setSelectedNode}
                             />
                         </div>
                     </div>
@@ -178,6 +190,17 @@ function App() {
                     </div>
                 )}
             </div>
+            {showNodeDetails && projectData && (
+                <NodeDetails
+                    data={
+                        projectData.nodes.find(
+                            (node) => node.id === selectedNode
+                        )?.data
+                    }
+                    setShowDetails={setShowNodeDetails}
+                    setProjectData={setProjectData}
+                />
+            )}
         </div>
     );
 }
