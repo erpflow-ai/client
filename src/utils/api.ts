@@ -51,7 +51,7 @@ const getParent = (ordertext: string, node_id: string) => {
     };
 };
 
-const parser = (json: any, orderText: string) => {
+export const parser = (json: any, orderText: string) => {
     let nodes: any[] = [];
     let edges: any[] = [];
     let total_cost = 0;

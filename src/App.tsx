@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Bot, Send, Building2, Sparkles, X, Mic, Loader2 } from "lucide-react";
 import ProjectGraph from "./components/ProjectGraph";
 import LoadingScreen from "./components/LoadingScreen";
-import { ApiResponse, apiCall } from "./utils/api";
+import { ApiResponse, apiCall, parser } from "./utils/api";
 import NodeDetails from "./components/NodeDetails";
 import logo from "./assets/logo.svg";
 import AudioReactRecorder, { RecordState } from "audio-react-recorder";
@@ -78,24 +78,29 @@ function App() {
                 "http://localhost:8000/gen/upload",
                 { base64: data }
             );
-
-            if (response.data.message === "Audio Converted") {
-                const uploadResponse = await axios.post(
-                    "/admin/input/voice_upload"
-                );
+                let message = response.data.message;
+                console.log("recieved message:" ,message)
+                message = message.substring(7, message.length - 4);
+                let json = JSON.parse(message);
+                console.log(json);
+                let parsedData = parser(json, "Root");
                 // @ts-ignore
-                setProjectData(uploadResponse.message);
+                setProjectData(parsedData);
+                setShowSuccessMessage(true);
+            setTimeout(() => setShowSuccessMessage(false), 3000);
                 // if (uploadResponse.data.message === "Audio Upload Successful") {
                 //   // Handle successful upload
                 //   console.log("Audio uploaded successfully!");
                 //   // You might want to do something with uploadResponse.data.call_id
                 // }
-            }
+            
         } catch (error) {
             console.error("Error uploading audio:", error);
         } finally {
             setIsLoading(false);
             setRecordState(RecordState.NONE);
+            setOrder("");
+
         }
     };
 
