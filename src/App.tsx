@@ -4,6 +4,7 @@ import ProjectGraph from "./components/ProjectGraph";
 import LoadingScreen from "./components/LoadingScreen";
 import { ApiResponse, apiCall } from "./utils/api";
 import NodeDetails from "./components/NodeDetails";
+import logo from './assets/logo.svg'
 
 const exampleOrders = [
     "200ft bridge in Mumbai",
@@ -49,8 +50,12 @@ function App() {
 
         try {
             const response: any = await apiCall(order);
-            setProjectData(response);
-            console.log(response);
+
+            console.log("response: ", response);
+
+            const modifiedResponse = { ...response, capital: 0 };
+            setProjectData(modifiedResponse);
+            console.log("modified: ", modifiedResponse);
             setShowSuccessMessage(true);
             setTimeout(() => setShowSuccessMessage(false), 3000);
         } finally {
@@ -77,8 +82,12 @@ function App() {
             </div>
 
             <div className="container mx-auto px-4 py-16 relative z-10">
-                <div className="max-w-3xl mx-auto text-center mb-16">
-                    <h2 className="text-6xl font-bold mb-8 leading-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
+                <div className="max-w-3xl mx-auto text-center flex flex-col  items-center mb-16">
+                    <div className="flex flex-row items-center gap-[1rem]">
+                        <img src={logo} className="w-[70px] h-[70px]" alt="logo" />
+                        <h1 className="font-semibold text-[5rem] mb-[1rem]">BlueAI</h1>
+                    </div>
+                    <h2 className="text-4xl font-bold mb-8 leading-tight bg-clip-text text-transparent bg-gradient-to-b from-white to-gray-400">
                         Transform Your Project Planning
                     </h2>
                     <p className="text-xl text-gray-300 mb-8 leading-relaxed">
@@ -105,11 +114,10 @@ function App() {
                             <button
                                 type="submit"
                                 disabled={isLoading || !order.trim()}
-                                className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300 ${
-                                    isLoading || !order.trim()
-                                        ? "bg-gray-700 cursor-not-allowed"
-                                        : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-lg hover:shadow-blue-500/25"
-                                }`}
+                                className={`px-6 py-3 rounded-xl flex items-center space-x-2 transition-all duration-300 ${isLoading || !order.trim()
+                                    ? "bg-gray-700 cursor-not-allowed"
+                                    : "bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 shadow-lg hover:shadow-blue-500/25"
+                                    }`}
                             >
                                 {!isLoading && (
                                     <>
@@ -122,11 +130,10 @@ function App() {
                     </form>
 
                     <div
-                        className={`mt-4 transition-all duration-300 ${
-                            showSuccessMessage
-                                ? "opacity-100 transform translate-y-0"
-                                : "opacity-0 transform -translate-y-2"
-                        }`}
+                        className={`mt-4 transition-all duration-300 ${showSuccessMessage
+                            ? "opacity-100 transform translate-y-0"
+                            : "opacity-0 transform -translate-y-2"
+                            }`}
                     >
                         <div className="bg-green-500/20 text-green-300 px-4 py-2 rounded-lg backdrop-blur-sm">
                             Project analysis complete! View the project timeline
