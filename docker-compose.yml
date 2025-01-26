@@ -1,0 +1,10 @@
+services:
+  server:
+    container_name: client
+    image: client
+    build:
+      context: .
+      target: prod
+    ports:
+      - 5174:80
+    restart: always
