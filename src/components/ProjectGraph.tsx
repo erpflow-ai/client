@@ -14,6 +14,8 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { ApiResponse } from "../utils/api";
+import axios from "axios";
+import { backend_url } from "../config/config";
 
 type NodeData = {
     label: string;
@@ -21,7 +23,8 @@ type NodeData = {
         id: string;
         duration: string;
         cost: string;
-        resources: string;
+        stakeholders: string;
+        bom: string;
         status: string;
     };
     setShowDetails: React.Dispatch<React.SetStateAction<boolean>>;
@@ -106,7 +109,8 @@ const ProjectGraph: React.FC<ProjectGraphProps> = ({
                     id: `${Date.now()}`,
                     duration: "",
                     cost: "",
-                    resources: "",
+                    bom: "",
+                    stakeholders: "",
                     status: "",
                 },
                 setShowDetails,
@@ -170,6 +174,43 @@ const ProjectGraph: React.FC<ProjectGraphProps> = ({
         [setEdges]
     );
 
+    const handleSubmit = () => {
+        //subworkers of each node should be stored in the node itself not with edges
+
+        const root = nodes.find((node) => node.id === "parent");
+        if (!root) {
+            return;
+        }
+
+        const recurse = (node: any) => {
+            const subworkerIds = edges
+                .filter((edge) => edge.source === node.id)
+                .map((edge) => edge.target);
+
+            const subworkers = subworkerIds.map((targetId) =>
+                nodes.find((n) => n.id === targetId)
+            );
+            node.data.details.subworkers = subworkers;
+
+            subworkers.forEach((subworker) => {
+                recurse(subworker);
+            });
+        };
+
+        recurse(root);
+
+        axios
+            .post(`${backend_url}` + "/client/storeProject", {
+                root: root,
+            })
+            .then((response) => {
+                console.log(response);
+            })
+            .catch((error) => {
+                console.log(error);
+            });
+    };
+
     return (
         <>
             <ReactFlowProvider>
@@ -181,7 +222,7 @@ const ProjectGraph: React.FC<ProjectGraphProps> = ({
                         Add Node
                     </button>
                     <button
-                        // onClick={handleSubmit}
+                        onClick={handleSubmit}
                         className="absolute top-4 right-4 z-[500] bg-white text-black px-4 py-2 rounded-md shadow-md hover:bg-gray-300"
                     >
                         Submit

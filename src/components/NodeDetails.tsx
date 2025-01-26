@@ -10,7 +10,10 @@ export type NodeDetailsProps = {
                   id: string;
                   duration: string;
                   cost: string;
-                  resources: string;
+                  bom: string;
+                  stakeholders: string;
+                  bom_full: { item: string; price: number; vendor: string }[];
+                  subworkers: Node[];
                   status: string;
               };
           }
@@ -115,15 +118,31 @@ const NodeDetails: React.FC<NodeDetailsProps> = ({
                             className="w-full p-2 mt-1 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring focus:ring-blue-500"
                         />
                     </div>
+
+                    <div>
+                        <label className="text-sm text-gray-400">BOM:</label>
+                        <input
+                            type="text"
+                            value={editableData.details.bom}
+                            onChange={(e) =>
+                                handleInputChange("bom", e.target.value)
+                            }
+                            className="w-full p-2 mt-1 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring focus:ring-blue-500"
+                        />
+                    </div>
+
                     <div>
                         <label className="text-sm text-gray-400">
-                            Required Resources:
+                            StakeHolders:
                         </label>
                         <input
                             type="text"
-                            value={editableData.details.resources}
+                            value={editableData.details.stakeholders}
                             onChange={(e) =>
-                                handleInputChange("resources", e.target.value)
+                                handleInputChange(
+                                    "stakeholders",
+                                    e.target.value
+                                )
                             }
                             className="w-full p-2 mt-1 bg-gray-700 text-white rounded border border-gray-600 focus:outline-none focus:ring focus:ring-blue-500"
                         />
